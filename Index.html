@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Floating Chat Bar</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: sans-serif;
+    }
+    .chat-bar {
+  flex-direction: column;
+  gap: 8px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  background: rgba(211, 211, 211, 0.05);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 32px;
+  box-shadow: 0 0 40px rgba(0, 50, 255, 0.2), 0 0 80px rgba(0, 50, 255, 0.15);
+  width: 650px;
+  margin: 0 auto;
+  padding: 0 16px;
+  min-height: 52px;
+  position: relative;
+}
+    .chat-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 20px;
+  background: transparent;
+  caret-color: transparent;
+  color: black;
+  font-family: inherit;
+  height: auto;
+  line-height: 1.5;
+  padding: 12px 0;
+}
+    .typing-indicator {
+  position: absolute;
+  height: 35px;
+  width: 6px;
+  background-color: rgba(0, 50, 255, 0.6);
+  opacity: 0.5;
+  border-radius: 2px;
+  bottom: 8px;
+  animation: typing-grow-shrink 1.2s ease-in-out infinite;
+  transition: left 0.1s ease;
+  pointer-events: none;
+}
+    @keyframes typing-grow-shrink {
+      0% { height: 0; opacity: 0; }
+      20% { height: 35px; opacity: 1; }
+      60% { height: 35px; opacity: 1; }
+      100% { height: 0; opacity: 0; }
+    }
+    .chat-response {
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  box-shadow: 0 0 20px rgba(0, 50, 255, 0.1);
+  font-size: 16px;
+  color: black;
+  display: none;
+}
+    .chat-response.show {
+      display: block;
+    }
+    
+  .chat-input-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  .chat-input {
+    color: black;
+    height: auto;
+  }
+
+  .chat-response {
+    font-size: 16px;
+    color: black;
+    display: none;
+    margin-top: 6px;
+    padding-left: 4px;
+    padding-right: 4px;
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+    backdrop-filter: none;
+  }
+
+  .chat-response.show {
+    display: block;
+  }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+#chatMessages {
+  position: absolute;
+  bottom: 100%;
+  margin-bottom: 16px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 50vh;
+  overflow-y: auto;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 100%);
+  padding-right: 4px;
+}
+</style>
+</head>
+<body style="display: flex; justify-content: center; align-items: end; height: 100vh;">
+  <div style="margin-bottom: calc(100vh / 3); width: 100%; display: flex; flex-direction: column; align-items: center;">
+
+  <!-- 1. DESIGN OVERLAY -->
+  <div class="design-wrapper">
+    <!-- 1(a) Chat Bar Design -->
+    <div class="chat-bar" id="chatBar">
+  <div id="chatMessages" style="position: absolute; bottom: 100%; margin-bottom: 16px; width: 100%; display: flex; flex-direction: column; gap: 8px;"></div>
+  <div class="chat-input-wrapper">
+    <input type="text" class="chat-input" id="chatInput" autofocus />
+    <div class="typing-indicator"></div>
+  </div>
+</div>
+<!-- 1(b) AI Response Design removed: now embedded in chat-bar -->
+  </div>
+
+  <!-- 2. FUNCTIONALITY OVERLAY (script untouched below) -->
+
+  <script>
+// === CONFIGURATION ===
+const useAI = false; // Flip this to true when you're ready to plug in real AI
+    // === UI COMPONENT HOOKS ===
+const input = document.getElementById('chatInput');
+    const messages = document.getElementById('chatMessages');
+    const indicator = document.querySelector('.typing-indicator');
+
+    const updateIndicatorPosition = () => {
+  const caretPos = input.selectionStart;
+  const tempSpan = document.createElement('span');
+  tempSpan.textContent = input.value.substring(0, caretPos);
+  tempSpan.style.visibility = 'hidden';
+  tempSpan.style.position = 'absolute';
+  tempSpan.style.font = window.getComputedStyle(input).font;
+  tempSpan.style.whiteSpace = 'pre';
+  document.querySelector('.chat-input-wrapper').appendChild(tempSpan);
+  const caretX = tempSpan.offsetWidth;
+  document.querySelector('.chat-input-wrapper').removeChild(tempSpan);
+  indicator.style.left = `${caretX + 4}px`;
+};
+
+    input.addEventListener('input', updateIndicatorPosition);
+    input.addEventListener('click', updateIndicatorPosition);
+    input.addEventListener('keyup', updateIndicatorPosition);
+
+    input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const text = input.value;
+    handleSubmit(text);
+  }
+});
+
+    window.onload = () => {
+  input.focus();
+  setTimeout(updateIndicatorPosition, 0);
+};
+  
+
+// === FUNCTIONAL LAYER ===
+async function handleSubmit(text) {
+  if (!text.trim()) return;
+  input.value = '';
+  // No longer used
+  // No longer used
+
+  if (!useAI) {
+    // fallback/local behavior
+    addMessage(text, 'user');
+    addMessage('Thinking about: "' + text + '"...', 'ai');
+    return;
+  }
+
+  // placeholder: future AI fetch logic here
+  try {
+    addMessage('[AI response would appear here]', 'ai');
+  } catch (err) {
+    addMessage('⚠️ AI unavailable. Try again later.', 'ai');
+    console.error(err);
+  }
+}
+function addMessage(text, role) {
+  const bubble = document.createElement('div');
+  bubble.textContent = text;
+  bubble.style.maxWidth = '80%';
+  bubble.style.padding = '8px 12px';
+  bubble.style.borderRadius = '12px';
+  bubble.style.fontSize = '16px';
+  bubble.style.color = 'black';
+  bubble.style.background = 'rgba(255, 255, 255, 0.08)';
+  bubble.style.backdropFilter = 'blur(8px)';
+  bubble.style.webkitBackdropFilter = 'blur(8px)';
+  bubble.style.animation = 'fadeIn 0.3s ease-out';
+
+  if (role === 'user') {
+    bubble.style.alignSelf = 'flex-start';
+    bubble.style.background = 'rgba(255, 255, 255, 0.1)';
+  } else {
+    bubble.style.alignSelf = 'flex-end';
+    bubble.style.background = 'rgba(0, 50, 255, 0.1)';
+  }
+
+  messages.appendChild(bubble);
+  messages.scrollTop = messages.scrollHeight;
+}
+</script>
+  </div>
+</body>
+</html>
